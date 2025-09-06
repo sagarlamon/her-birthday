@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday Madam Ji</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        .font-dancing { font-family: 'Dancing Script', cursive; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
+        
+        .glow-btn {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .glow-btn:hover {
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+        }
+        
+        .sky-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        /* Volume Popup */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: popupFadeIn 0.5s ease-out;
+        }
+
+        @keyframes popupFadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .popup h2 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .popup p {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        .popup button {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .popup button:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Animation Container */
+        .animation-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            z-index: 100;
+            display: none;
+        }
+
+        /* Round Image */
+        .round-image {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            transform: translate(-50%, -50%) scale(0);
+            border-radius: 50%;
+            background-image: url('last.jpg');
+            background-size: cover;
+            background-position: center;
+            border: 5px solid white;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            animation: imageZoom 1s ease-out 0.5s forwards;
+        }
+
+        @keyframes imageZoom {
+            to {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        /* Stars */
+        .star {
+            position: absolute;
+            color: #FFD700;
+            font-size: 24px;
+            animation: blink 1s infinite alternate;
+        }
+
+        .star:nth-child(2) { top: 10%; left: 20%; animation-delay: 0s; }
+        .star:nth-child(3) { top: 15%; right: 25%; animation-delay: 0.2s; }
+        .star:nth-child(4) { top: 70%; left: 15%; animation-delay: 0.4s; }
+        .star:nth-child(5) { top: 80%; right: 20%; animation-delay: 0.6s; }
+        .star:nth-child(6) { top: 30%; left: 5%; animation-delay: 0.8s; }
+        .star:nth-child(7) { top: 60%; right: 10%; animation-delay: 1s; }
+
+        /* Hearts */
+        .heart {
+            position: absolute;
+            color: #FF69B4;
+            font-size: 20px;
+            animation: blink 1.2s infinite alternate;
+        }
+
+        .heart:nth-child(9) { top: 25%; left: 80%; animation-delay: 0.1s; }
+        .heart:nth-child(10) { top: 45%; right: 85%; animation-delay: 0.3s; }
+        .heart:nth-child(11) { top: 85%; left: 75%; animation-delay: 0.5s; }
+        .heart:nth-child(12) { top: 90%; right: 75%; animation-delay: 0.7s; }
+        .heart:nth-child(13) { top: 10%; left: 75%; animation-delay: 0.9s; }
+        .heart:nth-child(14) { top: 65%; left: 5%; animation-delay: 1.1s; }
+
+        @keyframes blink {
+            0% { 
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            100% { 
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        @keyframes containerFadeOut {
+            to {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+        }
+        
+        /* Message Box */
+        .message-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: messageAppear 1s ease-out forwards;
+        }
+
+        @keyframes messageAppear {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-box h1 {
+            font-size: 3em;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-box h2 {
+            font-size: 1.5em;
+            color: #666;
+            font-weight: normal;
+            margin-bottom: 20px;
+        }
+
+        /* Bottom Message */
+        .bottom-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            opacity: 0;
+            animation: bottomMessageAppear 1s ease-out forwards;
+        }
+
+        @keyframes bottomMessageAppear {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        
+        .fade-out {
+            animation: fadeOut 1s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-900 overflow-hidden" id="body">
+    <!-- Volume Popup -->
+    <div id="volume-popup" class="popup-overlay hidden">
+        <div class="popup">
+            <h2>🎵 Get Ready for Music!</h2>
+            <p>Please increase your phone volume for the best experience with background music.</p>
+            <button id="start-music-btn">Start the Celebration!</button>
+        </div>
+    </div>
+
+    <!-- Audio Element -->
+    <audio id="background-music" loop>
+        <source src="bg1.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Initial Screen -->
+    <div class="min-h-screen flex items-center justify-center px-4" id="initial-screen">
+        <div class="text-center">
+            <h1 class="text-6xl font-dancing text-white mb-12 opacity-80">
+                Light Up My Life
+            </h1>
+            <button 
+                id="light-btn"
+                class="px-12 py-6 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-2xl font-playfair font-semibold rounded-full glow-btn hover:from-pink-600 hover:to-purple-700"
+            >
+                Turn the Lights On ✨
+            </button>
+        </div>
+    </div>
+
+    <!-- Animation Container -->
+    <div id="animation-container" class="animation-container">
+        <div class="round-image"></div>
+        <div class="star">⭐</div>
+        <div class="star">✨</div>
+        <div class="star">⭐</div>
+        <div class="star">✨</div>
+        <div class="star">⭐</div>
+        <div class="star">✨</div>
+        <div class="heart">💖</div>
+        <div class="heart">💕</div>
+        <div class="heart">💖</div>
+        <div class="heart">💕</div>
+        <div class="heart">💖</div>
+        <div class="heart">💕</div>
+    </div>
+
+    <!-- Main Message -->
+    <div id="main-message" class="fixed inset-0 flex items-center justify-center p-6 hidden">
+        <div class="message-box">
+            <h1 class="font-dancing">Happy Birthday Madam Ji</h1>
+            <h2 class="font-playfair">but things that I don't like about you</h2>
+            <div style="min-height: 60px; border: 2px dashed #ddd; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">
+                (This section is intentionally left empty)
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Message -->
+    <div id="bottom-message" class="bottom-message hidden">
+        <p class="font-playfair text-lg mb-2">Wishing you the most wonderful birthday! 🎂✨</p>
+        <p class="font-dancing text-base">With love and warm wishes,</p>
+        <p class="font-dancing text-lg font-bold text-pink-600 mt-1">Someone who littel-littel cares about you 💕</p>
+    </div>
+
+    <script>
+        const lightBtn = document.getElementById('light-btn');
+        const body = document.getElementById('body');
+        const initialScreen = document.getElementById('initial-screen');
+        const volumePopup = document.getElementById('volume-popup');
+        const startMusicBtn = document.getElementById('start-music-btn');
+        const backgroundMusic = document.getElementById('background-music');
+        const animationContainer = document.getElementById('animation-container');
+        const mainMessage = document.getElementById('main-message');
+        const bottomMessage = document.getElementById('bottom-message');
+
+        let animationRunning = false;
+
+        lightBtn.addEventListener('click', () => {
+            if (animationRunning) return;
+            animationRunning = true;
+            
+            volumePopup.classList.remove('hidden');
+        });
+
+        startMusicBtn.addEventListener('click', () => {
+            volumePopup.classList.add('hidden');
+            
+            backgroundMusic.play().catch(e => console.log('Audio play failed:', e));
+            
+            startCelebration();
+        });
+
+        function startCelebration() {
+            lightBtn.classList.add('fade-out');
+            body.className = 'min-h-screen sky-gradient overflow-hidden';
+            
+            setTimeout(() => {
+                initialScreen.style.display = 'none';
+                startAnimation();
+            }, 1000);
+        }
+
+        function startAnimation() {
+            // Show animation container
+            animationContainer.style.display = 'block';
+            
+            // After 4 seconds, fade out and show main message
+            setTimeout(() => {
+                animationContainer.style.animation = 'containerFadeOut 0.5s ease-out forwards';
+                
+                setTimeout(() => {
+                    animationContainer.style.display = 'none';
+                    showMainMessage();
+                }, 500);
+            }, 4000);
+        }
+
+        function showMainMessage() {
+            mainMessage.classList.remove('hidden');
+            
+            setTimeout(() => {
+                bottomMessage.classList.remove('hidden');
+            }, 2000);
+        }
+
+        lightBtn.addEventListener('mouseover', () => {
+            lightBtn.style.transform = 'scale(1.05)';
+        });
+        
+        lightBtn.addEventListener('mouseout', () => {
+            lightBtn.style.transform = 'scale(1)';
+        });
+    </script>
+</body>
+</html>

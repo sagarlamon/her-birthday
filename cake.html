@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Let's Celebrate with Cake!</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #ffcad4, #ffd1e3, #e0c3fc, #bde0fe);
+            background-size: 400% 400%;
+            animation: gradientBG 8s ease infinite;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            will-change: background-position;
+        }
+
+        .heading {
+            font-size: 3.5rem;
+            color: #ff71b6;
+            text-shadow: 
+                0 0 10px rgba(255, 113, 182, 0.5),
+                0 0 20px rgba(255, 113, 182, 0.3),
+                0 0 30px rgba(255, 113, 182, 0.2);
+            margin-bottom: 2rem;
+            text-align: center;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @media (max-width: 768px) {
+            .heading {
+                font-size: 2.5rem;
+            }
+        }
+
+        .instructions {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(255, 113, 182, 0.3);
+            font-size: 14px;
+            color: #333;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .instructions {
+                top: 10px;
+                padding: 10px 20px;
+                font-size: 12px;
+            }
+        }
+
+        .instructions.hidden {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px #ff71b6, 0 0 20px #ff71b6, 0 0 30px #ff9ecd;
+            }
+            to {
+                text-shadow: 0 0 20px #ff71b6, 0 0 30px #ff71b6, 0 0 40px #ff9ecd;
+            }
+        }
+
+        .cake-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        @media (max-width: 768px) {
+            .cake-container {
+                width: 250px;
+                height: 250px;
+            }
+        }
+
+        .cake {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            transform-style: preserve-3d;
+            transform: perspective(1000px) rotateX(5deg);
+            transition: transform 0.2s ease;
+            will-change: transform;
+        }
+
+        @media (max-width: 768px) {
+            .cake {
+                width: 200px;
+                height: 200px;
+            }
+        }
+
+        .cake:hover {
+            transform: perspective(1000px) rotateX(5deg) scale(1.02);
+        }
+
+        .cake.cut {
+            animation: cakeCut 1s ease-out forwards;
+        }
+
+        @keyframes cakeCut {
+            0% { transform: perspective(1000px) rotateX(5deg) scale(1); }
+            50% { transform: perspective(1000px) rotateX(5deg) scale(0.95) rotateZ(-2deg); }
+            100% { transform: perspective(1000px) rotateX(5deg) scale(1) rotateZ(0deg); }
+        }
+
+        .layer {
+            position: absolute;
+            width: 100%;
+            background: linear-gradient(to right, #ff9ecd, #ff71b6);
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+        }
+
+        .layer-1 {
+            height: 80px;
+            bottom: 0;
+            width: 250px;
+        }
+
+        .layer-2 {
+            height: 70px;
+            bottom: 80px;
+            width: 220px;
+            left: 15px;
+            background: linear-gradient(to right, #ffb7e0, #ff8ac7);
+        }
+
+        .layer-3 {
+            height: 60px;
+            bottom: 150px;
+            width: 190px;
+            left: 30px;
+            background: linear-gradient(to right, #ffc4e6, #ffa3d4);
+        }
+
+        @media (max-width: 768px) {
+            .layer-1 {
+                height: 65px;
+                width: 200px;
+            }
+            .layer-2 {
+                height: 55px;
+                bottom: 65px;
+                width: 175px;
+                left: 12px;
+            }
+            .layer-3 {
+                height: 50px;
+                bottom: 120px;
+                width: 150px;
+                left: 25px;
+            }
+        }
+
+        .frosting {
+            position: absolute;
+            width: 20px;
+            height: 30px;
+            background: white;
+            border-radius: 50%;
+            top: -15px;
+        }
+
+        .candle {
+            position: absolute;
+            width: 20px;
+            height: 60px;
+            background: linear-gradient(to right, #fff, #ffd1e3);
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 10px;
+            z-index: 10;
+        }
+
+        .flame {
+            position: absolute;
+            width: 20px;
+            height: 30px;
+            background: linear-gradient(to bottom, #ff9d00, #ff5e00);
+            border-radius: 50% 50% 20% 20%;
+            top: -25px;
+            animation: flicker 1s infinite;
+            filter: drop-shadow(0 0 10px #ff9d00);
+        }
+
+        .flame.blowing {
+            animation: blowOut 0.8s ease-out forwards;
+        }
+
+        @keyframes blowOut {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+                filter: drop-shadow(0 0 10px #ff9d00);
+            }
+            30% {
+                transform: scale(1.3) skewX(20deg);
+                opacity: 0.8;
+            }
+            60% {
+                transform: scale(0.8) skewX(45deg);
+                opacity: 0.3;
+            }
+            100% {
+                transform: scale(0) skewX(90deg);
+                opacity: 0;
+                filter: drop-shadow(0 0 0 transparent);
+            }
+        }
+
+        .ribbon {
+            position: fixed;
+            width: 15px;
+            height: 50px;
+            top: -50px;
+            border-radius: 5px;
+            animation: ribbonFall 2.5s linear forwards;
+            will-change: transform;
+        }
+
+        @keyframes ribbonFall {
+            0% {
+                transform: translateY(0) rotate(0deg) translateX(0);
+            }
+            50% {
+                transform: translateY(50vh) rotate(180deg) translateX(50px);
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg) translateX(-50px);
+            }
+        }
+
+        @keyframes flicker {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.95); opacity: 0.9; }
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .next-page-button {
+            position: fixed;
+            bottom: 40px;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            background: linear-gradient(45deg, #ff9ecd, #ff71b6);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 0 15px rgba(255, 113, 182, 0.5),
+                0 0 30px rgba(255, 113, 182, 0.3);
+            font-family: 'Arial', sans-serif;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .next-page-button {
+                bottom: 20px;
+                padding: 12px 30px;
+                font-size: 1rem;
+            }
+        }
+
+        .next-page-button::after {
+            content: '→';
+            font-size: 1.4rem;
+            transition: transform 0.3s ease;
+        }
+
+        .next-page-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 0 20px rgba(255, 113, 182, 0.6),
+                0 0 40px rgba(255, 113, 182, 0.4);
+            background: linear-gradient(45deg, #ffb7e0, #ff8ac7);
+        }
+
+        .next-page-button:hover::after {
+            transform: translateX(5px);
+        }
+
+        .next-page-button.show {
+            opacity: 1;
+            transform: translateY(0);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        /* Notification Popup */
+        .notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(255, 113, 182, 0.3);
+            z-index: 2000;
+            max-width: 400px;
+            width: 90%;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .notification.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .notification h3 {
+            color: #ff71b6;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .notification p {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .notification-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .notification button {
+            background: linear-gradient(45deg, #ff9ecd, #ff71b6);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin: 0 5px;
+        }
+
+        .notification button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 113, 182, 0.4);
+        }
+
+        .notification button.secondary {
+            background: rgba(100, 100, 100, 0.2);
+            color: #666;
+        }
+
+        /* Microphone status */
+        .mic-status {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 50px;
+            box-shadow: 0 8px 32px rgba(255, 113, 182, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 50;
+        }
+
+        .mic-status.show {
+            opacity: 1;
+        }
+
+        .mic-icon {
+            font-size: 1.5rem;
+            animation: pulse 1s infinite;
+        }
+
+        .audio-level {
+            width: 50px;
+            height: 8px;
+            background: rgba(255, 113, 182, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .audio-level-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #ff9ecd, #ff71b6);
+            width: 0%;
+            transition: width 0.1s ease;
+            border-radius: 4px;
+        }
+
+        /* Cake pieces for cutting effect */
+        .cake-piece {
+            position: absolute;
+            background: inherit;
+            border-radius: inherit;
+            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            will-change: transform;
+        }
+
+        .cake-piece.animate {
+            transform: translateX(var(--offset-x, 0)) translateY(var(--offset-y, 0)) rotate(var(--rotation, 0));
+        }
+
+        /* Swipe indicator */
+        .swipe-indicator {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff71b6;
+            font-size: 1rem;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInOut 3s ease-in-out infinite;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        /* Performance optimizations */
+        .cake, .layer, .flame, .ribbon {
+            transform: translate3d(0, 0, 0);
+            -webkit-transform: translate3d(0, 0, 0);
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        🎤 Blow into mic to blow candle • 👆 Swipe to cut cake
+    </div>
+
+    <h1 class="heading">Let's Cut the Cake! 🎂</h1>
+    
+    <div class="cake-container">
+        <div class="cake">
+            <div class="layer layer-1">
+                <div class="frosting"></div>
+                <div class="frosting" style="left: 40px"></div>
+                <div class="frosting" style="right: 40px"></div>
+            </div>
+            <div class="layer layer-2">
+                <div class="frosting"></div>
+                <div class="frosting" style="left: 35px"></div>
+                <div class="frosting" style="right: 35px"></div>
+            </div>
+            <div class="layer layer-3">
+                <div class="frosting"></div>
+                <div class="frosting" style="left: 30px"></div>
+                <div class="frosting" style="right: 30px"></div>
+                <div class="candle">
+                    <div class="flame"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="swipe-indicator">
+        Swipe across the cake to cut it! ✋
+    </div>
+
+    <div class="mic-status">
+        <div class="mic-icon">🎤</div>
+        <div class="audio-level">
+            <div class="audio-level-fill"></div>
+        </div>
+    </div>
+
+    <div class="notification" id="micNotification">
+        <div class="notification-icon">🎤</div>
+        <h3>Microphone Access</h3>
+        <p>We need microphone access so you can blow out the candle! Don't worry, we don't record anything.</p>
+        <button onclick="requestMicAccess()">Allow Microphone</button>
+        <button class="secondary" onclick="skipMic()">Skip</button>
+    </div>
+
+    <div class="notification" id="celebrationNotification">
+        <div class="notification-icon">🎉</div>
+        <h3>Congratulations!</h3>
+        <p>You successfully cut the cake! Time to celebrate! 🎂✨</p>
+        <button onclick="closeNotification('celebrationNotification')">Awesome!</button>
+    </div>
+
+    <button class="next-page-button">Next Page</button>
+
+    <script>
+        let micAccessGranted = false;
+        let audioContext;
+        let analyser;
+        let microphone;
+        let dataArray;
+        let candleBlewOut = false;
+        let cakeCut = false;
+        let isProcessingAudio = false;
+        
+        const cake = document.querySelector('.cake-container');
+        const cakeElement = document.querySelector('.cake');
+        const candle = document.querySelector('.candle');
+        const flame = document.querySelector('.flame');
+        const micStatus = document.querySelector('.mic-status');
+        const audioLevelFill = document.querySelector('.audio-level-fill');
+        const swipeIndicator = document.querySelector('.swipe-indicator');
+        const instructions = document.querySelector('.instructions');
+
+        // Performance optimization: debounce function
+        const debounce = (func, wait) => {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        };
+
+        // Ribbon colors for performance
+        const ribbonColors = [
+            'linear-gradient(45deg, #FF9ECD, #FF71B6)',
+            'linear-gradient(45deg, #FFB7E0, #FF8AC7)',
+            'linear-gradient(45deg, #FFC4E6, #FFA3D4)',
+            'linear-gradient(45deg, #E0C3FC, #BDE0FE)',
+            'linear-gradient(45deg, #FFCAD4, #FFD1E3)',
+            'linear-gradient(45deg, #B5EAD7, #C7F9CC)',
+        ];
+
+        // Show microphone permission on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                showNotification('micNotification');
+            }, 1000);
+        });
+
+        function showNotification(id) {
+            document.getElementById(id).classList.add('show');
+        }
+
+        function closeNotification(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        function skipMic() {
+            closeNotification('micNotification');
+            // Show swipe indicator if candle is still lit
+            if (!candleBlewOut) {
+                setTimeout(() => {
+                    swipeIndicator.style.opacity = '1';
+                }, 1000);
+            }
+        }
+
+        async function requestMicAccess() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: { 
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true 
+                    } 
+                });
+                
+                micAccessGranted = true;
+                closeNotification('micNotification');
+                setupAudioAnalysis(stream);
+                micStatus.classList.add('show');
+                
+                // Hide instructions after a while
+                setTimeout(() => {
+                    instructions.classList.add('hidden');
+                }, 5000);
+
+            } catch (error) {
+                console.log('Microphone access denied:', error);
+                skipMic();
+            }
+        }
+
+        function setupAudioAnalysis(stream) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            microphone = audioContext.createMediaStreamSource(stream);
+            
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            
+            microphone.connect(analyser);
+            
+            // Start analysis loop
+            analyzeAudio();
+        }
+
+        function analyzeAudio() {
+            if (!isProcessingAudio) {
+                requestAnimationFrame(analyzeAudio);
+                return;
+            }
+
+            analyser.getByteFrequencyData(dataArray);
+            
+            // Calculate average volume
+            const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+            const normalizedVolume = Math.min(100, (average / 128) * 100);
+            
+            // Update visual indicator
+            audioLevelFill.style.width = normalizedVolume + '%';
+            
+            // Check for blow detection (sudden increase in volume)
+            if (normalizedVolume > 30 && !candleBlewOut) {
+                blowOutCandle();
+            }
+            
+            requestAnimationFrame(analyzeAudio);
+        }
+
+        // Start processing audio when user interacts
+        document.addEventListener('click', () => {
+            if (micAccessGranted && !isProcessingAudio) {
+                isProcessingAudio = true;
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+            }
+        }, { once: true });
+
+        function blowOutCandle() {
+            if (candleBlewOut) return;
+            candleBlewOut = true;
+            
+            // Animate flame going out
+            flame.classList.add('blowing');
+            
+            // Remove candle after animation
+            setTimeout(() => {
+                gsap.to(candle, {
+                    opacity: 0,
+                    y: -20,
+                    duration: 0.5,
+                    ease: "power2.out",
+                    onComplete: () => {
+                        candle.style.display = 'none';
+                        // Show swipe indicator for cake cutting
+                        swipeIndicator.style.display = 'block';
+                        swipeIndicator.style.animation = 'fadeInOut 3s ease-in-out infinite';
+                    }
+                });
+            }, 800);
+
+            // Hide mic status
+            micStatus.classList.remove('show');
+        }
+
+        // Optimized ribbon creation
+        function createRibbon() {
+            const ribbon = document.createElement('div');
+            ribbon.className = 'ribbon';
+            ribbon.style.left = `${Math.random() * window.innerWidth}px`;
+            ribbon.style.background = ribbonColors[Math.floor(Math.random() * ribbonColors.length)];
+            document.body.appendChild(ribbon);
+
+            // Remove ribbon after animation
+            setTimeout(() => {
+                if (ribbon.parentNode) {
+                    ribbon.remove();
+                }
+            }, 2500);
+        }
+
+        // Touch/swipe handling for cake cutting
+        let startX = 0;
+        let startY = 0;
+        let isSwipeStarted = false;
+
+        cakeElement.addEventListener('touchstart', (e) => {
+            if (!candleBlewOut || cakeCut) return;
+            
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            isSwipeStarted = true;
+        }, { passive: true });
+
+        cakeElement.addEventListener('touchmove', (e) => {
+            if (!isSwipeStarted || cakeCut) return;
+            e.preventDefault();
+        }, { passive: false });
+
+        cakeElement.addEventListener('touchend', (e) => {
+            if (!isSwipeStarted || cakeCut) return;
+            
+            const endX = e.changedTouches[0].clientX;
+            const endY = e.changedTouches[0].clientY;
+            const deltaX = Math.abs(endX - startX);
+            const deltaY = Math.abs(endY - startY);
+            
+            // Check if it's a horizontal swipe (more horizontal than vertical)
+            if (deltaX > 50 && deltaX > deltaY) {
+                cutCake();
+            }
+            
+            isSwipeStarted = false;
+        }, { passive: true });
+
+        // Mouse swipe for desktop
+        let mouseDown = false;
+        let mouseStartX = 0;
+
+        cakeElement.addEventListener('mousedown', (e) => {
+            if (!candleBlewOut || cakeCut) return;
+            mouseDown = true;
+            mouseStartX = e.clientX;
+        });
+
+        cakeElement.addEventListener('mousemove', (e) => {
+            if (!mouseDown || cakeCut) return;
+            const deltaX = Math.abs(e.clientX - mouseStartX);
+            if (deltaX > 50) {
+                cutCake();
+                mouseDown = false;
+            }
+        });
+
+        cakeElement.addEventListener('mouseup', () => {
+            mouseDown = false;
+        });
+
+        function cutCake() {
+            if (cakeCut) return;
+            cakeCut = true;
+            
+            // Hide swipe indicator
+            swipeIndicator.style.display = 'none';
+            
+            // Add cut animation to cake
+            cakeElement.classList.add('cut');
+            
+            // Start celebration
+            startCelebration();
+        }
+
+        function startCelebration() {
+            // Create ribbon rain with reduced frequency for performance
+            const ribbonInterval = setInterval(() => {
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => createRibbon(), i * 150);
+                }
+            }, 300);
+
+            // Show celebration notification
+            setTimeout(() => {
+                showNotification('celebrationNotification');
+            }, 1000);
+
+            // Show next page button
+            setTimeout(() => {
+                const nextButton = document.querySelector('.next-page-button');
+                nextButton.classList.add('show');
+            }, 2000);
+
+            // Stop ribbon rain after 4 seconds
+            setTimeout(() => {
+                clearInterval(ribbonInterval);
+            }, 4000);
+        }
+
+        // Next page navigation
+        document.querySelector('.next-page-button').addEventListener('click', () => {
+            // Cleanup audio resources
+            if (audioContext) {
+                audioContext.close();
+            }
+            
+            // Smooth transition
+            gsap.to(document.body, {
+                opacity: 0,
+                duration: 0.5,
+                ease: "power2.out",
+                onComplete: () => {
+                    window.location.href = 'celebrate.html';
+                }
+            });
+        });
+
+        // Fallback: click to cut cake if no swipe detected after 10 seconds
+        setTimeout(() => {
+            if (candleBlewOut && !cakeCut) {
+                cake.addEventListener('click', cutCake);
+            }
+        }, 10000);
+
+        // Performance: Prevent context menu on mobile
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        
+        // Performance: Limit animation frame rate
+        let lastFrameTime = 0;
+        const targetFPS = 60;
+        const frameInterval = 1000 / targetFPS;
+
+        function limitedRequestAnimationFrame(callback) {
+            const now = Date.now();
+            const timeSinceLastFrame = now - lastFrameTime;
+            
+            if (timeSinceLastFrame >= frameInterval) {
+                lastFrameTime = now;
+                requestAnimationFrame(callback);
+            } else {
+                setTimeout(() => limitedRequestAnimationFrame(callback), frameInterval - timeSinceLastFrame);
+            }
+        }
+    </script>
+</body>
+</html>
