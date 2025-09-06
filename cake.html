@@ -94,6 +94,7 @@
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
+            transition: transform 0.1s ease;
         }
 
         @media (max-width: 768px) {
@@ -335,7 +336,6 @@
             50% { transform: scale(1.03); }
         }
 
-        /* Notification Popup */
         .notification {
             position: fixed;
             top: 50%;
@@ -404,7 +404,6 @@
             color: #666;
         }
 
-        /* Microphone status */
         .mic-status {
             position: fixed;
             top: 50%;
@@ -448,20 +447,6 @@
             border-radius: 4px;
         }
 
-        /* Cake pieces for cutting effect */
-        .cake-piece {
-            position: absolute;
-            background: inherit;
-            border-radius: inherit;
-            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            will-change: transform;
-        }
-
-        .cake-piece.animate {
-            transform: translateX(var(--offset-x, 0)) translateY(var(--offset-y, 0)) rotate(var(--rotation, 0));
-        }
-
-        /* Swipe indicator */
         .swipe-indicator {
             position: fixed;
             bottom: 120px;
@@ -471,6 +456,12 @@
             font-size: 1rem;
             text-align: center;
             opacity: 0;
+            display: none;
+        }
+
+        .swipe-indicator.show {
+            display: block;
+            opacity: 1;
             animation: fadeInOut 3s ease-in-out infinite;
         }
 
@@ -479,10 +470,45 @@
             50% { opacity: 1; }
         }
 
-        /* Performance optimizations */
-        .cake, .layer, .flame, .ribbon {
-            transform: translate3d(0, 0, 0);
-            -webkit-transform: translate3d(0, 0, 0);
+        .debug-panel {
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            z-index: 9999;
+            display: none;
+        }
+
+        .debug-panel.show {
+            display: block;
+        }
+
+        .test-buttons {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            z-index: 9999;
+            display: none;
+        }
+
+        .test-buttons.show {
+            display: block;
+        }
+
+        .test-buttons button {
+            display: block;
+            margin: 5px 0;
+            padding: 10px 15px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
         }
     </style>
 </head>
@@ -517,7 +543,7 @@
     </div>
 
     <div class="swipe-indicator">
-        Swipe across the cake to cut it! ✋
+        double tap or Swipe across the cake to cut it! ✋
     </div>
 
     <div class="mic-status">
@@ -544,16 +570,33 @@
 
     <button class="next-page-button">Next Page</button>
 
+    <div class="debug-panel" id="debugPanel">
+        <div>Mic Access: <span id="micStatus">No</span></div>
+        <div>Candle Blown: <span id="candleStatus">No</span></div>
+        <div>Cake Cut: <span id="cakeStatus">No</span></div>
+        <div>Audio Level: <span id="audioValue">0</span></div>
+    </div>
+
+    <div class="test-buttons" id="testButtons">
+        <button onclick="testBlowCandle()">Test Blow Candle</button>
+        <button onclick="testCutCake()">Test Cut Cake</button>
+        <button onclick="toggleDebug()">Toggle Debug</button>
+    </div>
+
     <script>
+        // Global variables
         let micAccessGranted = false;
-        let audioContext;
-        let analyser;
-        let microphone;
-        let dataArray;
+        let audioContext = null;
+        let analyser = null;
+        let microphone = null;
+        let dataArray = null;
         let candleBlewOut = false;
         let cakeCut = false;
-        let isProcessingAudio = false;
+        let animationFrameId = null;
+        let hasUserInteracted = false;
+        let debugMode = false;
         
+        // DOM elements
         const cake = document.querySelector('.cake-container');
         const cakeElement = document.querySelector('.cake');
         const candle = document.querySelector('.candle');
@@ -562,21 +605,9 @@
         const audioLevelFill = document.querySelector('.audio-level-fill');
         const swipeIndicator = document.querySelector('.swipe-indicator');
         const instructions = document.querySelector('.instructions');
+        const nextButton = document.querySelector('.next-page-button');
 
-        // Performance optimization: debounce function
-        const debounce = (func, wait) => {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        };
-
-        // Ribbon colors for performance
+        // Ribbon colors
         const ribbonColors = [
             'linear-gradient(45deg, #FF9ECD, #FF71B6)',
             'linear-gradient(45deg, #FFB7E0, #FF8AC7)',
@@ -586,32 +617,195 @@
             'linear-gradient(45deg, #B5EAD7, #C7F9CC)',
         ];
 
-        // Show microphone permission on load
-        window.addEventListener('load', () => {
+        // Initialize app
+        function init() {
+            console.log('Initializing cake app...');
+            
+            // Show test buttons in development
+            if (window.location.hostname === 'localhost' || 
+                window.location.hostname === '127.0.0.1' || 
+                window.location.search.includes('debug=true')) {
+                document.getElementById('testButtons').classList.add('show');
+                debugMode = true;
+            }
+            
+            // Show microphone permission after load
             setTimeout(() => {
                 showNotification('micNotification');
             }, 1000);
-        });
 
-        function showNotification(id) {
-            document.getElementById(id).classList.add('show');
+            // Set up event listeners
+            setupEventListeners();
+            
+            updateDebug();
         }
 
-        function closeNotification(id) {
-            document.getElementById(id).classList.remove('show');
+        // Event listeners
+        function setupEventListeners() {
+            // User interaction listeners to start audio context
+            document.addEventListener('click', handleUserInteraction, { once: true });
+            document.addEventListener('touchstart', handleUserInteraction, { once: true });
+            
+            // Touch events for cake cutting
+            cake.addEventListener('touchstart', handleTouchStart, { passive: false });
+            cake.addEventListener('touchmove', handleTouchMove, { passive: false });
+            cake.addEventListener('touchend', handleTouchEnd, { passive: true });
+            
+            // Mouse events for cake cutting
+            cake.addEventListener('mousedown', handleMouseDown);
+            cake.addEventListener('mousemove', handleMouseMove);
+            cake.addEventListener('mouseup', handleMouseUp);
+            cake.addEventListener('mouseleave', handleMouseUp);
+            
+            // Click fallback for cake cutting
+            cake.addEventListener('click', handleCakeClick);
+            
+            // Next page button
+            nextButton.addEventListener('click', handleNextPage);
+            
+            // Visual feedback for interactions
+            cake.addEventListener('touchstart', () => {
+                cake.style.transform = 'scale(0.98)';
+            }, { passive: true });
+            
+            cake.addEventListener('touchend', () => {
+                cake.style.transform = 'scale(1)';
+            }, { passive: true });
+
+            // Prevent context menu
+            document.addEventListener('contextmenu', (e) => e.preventDefault());
         }
 
-        function skipMic() {
-            closeNotification('micNotification');
-            // Show swipe indicator if candle is still lit
-            if (!candleBlewOut) {
-                setTimeout(() => {
-                    swipeIndicator.style.opacity = '1';
-                }, 1000);
+        // User interaction handler
+        function handleUserInteraction() {
+            console.log('User interaction detected');
+            hasUserInteracted = true;
+            if (micAccessGranted && audioContext) {
+                startAudioProcessing();
             }
         }
 
+        // Touch event handlers
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isTouchActive = false;
+
+        function handleTouchStart(e) {
+            if (!candleBlewOut || cakeCut) return;
+            
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isTouchActive = true;
+            
+            console.log('Touch start:', touchStartX, touchStartY);
+            e.preventDefault();
+        }
+
+        function handleTouchMove(e) {
+            if (!isTouchActive || cakeCut) return;
+            
+            const currentX = e.touches[0].clientX;
+            const deltaX = Math.abs(currentX - touchStartX);
+            
+            console.log('Touch move delta:', deltaX);
+            
+            if (deltaX > 60) {
+                console.log('Swipe detected via touchmove');
+                cutCake();
+                isTouchActive = false;
+            }
+            
+            e.preventDefault();
+        }
+
+        function handleTouchEnd(e) {
+            if (!isTouchActive || cakeCut) return;
+            
+            const endX = e.changedTouches[0].clientX;
+            const endY = e.changedTouches[0].clientY;
+            const deltaX = Math.abs(endX - touchStartX);
+            const deltaY = Math.abs(endY - touchStartY);
+            
+            console.log('Touch end - deltaX:', deltaX, 'deltaY:', deltaY);
+            
+            if (deltaX > 50 && deltaX > deltaY) {
+                console.log('Swipe detected via touchend');
+                cutCake();
+            }
+            
+            isTouchActive = false;
+        }
+
+        // Mouse event handlers
+        let mouseDown = false;
+        let mouseStartX = 0;
+
+        function handleMouseDown(e) {
+            if (!candleBlewOut || cakeCut) return;
+            
+            mouseDown = true;
+            mouseStartX = e.clientX;
+            console.log('Mouse down:', mouseStartX);
+            e.preventDefault();
+        }
+
+        function handleMouseMove(e) {
+            if (!mouseDown || cakeCut) return;
+            
+            const deltaX = Math.abs(e.clientX - mouseStartX);
+            console.log('Mouse move delta:', deltaX);
+            
+            if (deltaX > 60) {
+                console.log('Drag detected');
+                cutCake();
+                mouseDown = false;
+            }
+        }
+
+        function handleMouseUp() {
+            mouseDown = false;
+        }
+
+        // Click handler for cake cutting
+        function handleCakeClick(e) {
+            if (!candleBlewOut || cakeCut) return;
+            
+            console.log('Cake clicked');
+            setTimeout(() => {
+                if (!cakeCut && candleBlewOut) {
+                    console.log('Click fallback cut');
+                    cutCake();
+                }
+            }, 200);
+        }
+
+        // Notification functions
+        function showNotification(id) {
+            const notification = document.getElementById(id);
+            if (notification) {
+                notification.classList.add('show');
+                console.log('Showing notification:', id);
+            }
+        }
+
+        function closeNotification(id) {
+            const notification = document.getElementById(id);
+            if (notification) {
+                notification.classList.remove('show');
+                console.log('Closing notification:', id);
+            }
+        }
+
+        // Microphone functions
+        function skipMic() {
+            console.log('Skipping microphone');
+            closeNotification('micNotification');
+            showSwipeIndicator();
+        }
+
         async function requestMicAccess() {
+            console.log('Requesting microphone access...');
+            
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     audio: { 
@@ -621,98 +815,197 @@
                     } 
                 });
                 
+                console.log('Microphone access granted');
                 micAccessGranted = true;
                 closeNotification('micNotification');
                 setupAudioAnalysis(stream);
                 micStatus.classList.add('show');
+                
+                updateDebug();
                 
                 // Hide instructions after a while
                 setTimeout(() => {
                     instructions.classList.add('hidden');
                 }, 5000);
 
+                // Start audio processing if user has already interacted
+                if (hasUserInteracted) {
+                    startAudioProcessing();
+                }
+
             } catch (error) {
-                console.log('Microphone access denied:', error);
+                console.error('Microphone access denied:', error);
                 skipMic();
             }
         }
 
         function setupAudioAnalysis(stream) {
+            console.log('Setting up audio analysis...');
+            
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioContext.createAnalyser();
             microphone = audioContext.createMediaStreamSource(stream);
             
             analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.3;
             const bufferLength = analyser.frequencyBinCount;
             dataArray = new Uint8Array(bufferLength);
             
             microphone.connect(analyser);
             
-            // Start analysis loop
-            analyzeAudio();
+            console.log('Audio analysis setup complete');
         }
 
-        function analyzeAudio() {
-            if (!isProcessingAudio) {
-                requestAnimationFrame(analyzeAudio);
+        function startAudioProcessing() {
+            console.log('Starting audio processing...');
+            
+            if (!micAccessGranted || !analyser) {
+                console.log('Cannot start audio processing - missing requirements');
                 return;
             }
 
+            // Resume audio context if suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log('Audio context resumed');
+                    analyzeAudio();
+                });
+            } else {
+                analyzeAudio();
+            }
+        }
+
+        function analyzeAudio() {
+            if (!micAccessGranted || !analyser || candleBlewOut) {
+                return;
+            }
+
+            animationFrameId = requestAnimationFrame(analyzeAudio);
+            
             analyser.getByteFrequencyData(dataArray);
             
-            // Calculate average volume
-            const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+            // Calculate average volume focusing on mid-range frequencies
+            let sum = 0;
+            const startFreq = 5;
+            const endFreq = Math.min(60, dataArray.length);
+            
+            for (let i = startFreq; i < endFreq; i++) {
+                sum += dataArray[i];
+            }
+            
+            const average = sum / (endFreq - startFreq);
             const normalizedVolume = Math.min(100, (average / 128) * 100);
             
             // Update visual indicator
-            audioLevelFill.style.width = normalizedVolume + '%';
-            
-            // Check for blow detection (sudden increase in volume)
-            if (normalizedVolume > 30 && !candleBlewOut) {
-                blowOutCandle();
+            if (audioLevelFill) {
+                audioLevelFill.style.width = normalizedVolume + '%';
             }
             
-            requestAnimationFrame(analyzeAudio);
-        }
-
-        // Start processing audio when user interacts
-        document.addEventListener('click', () => {
-            if (micAccessGranted && !isProcessingAudio) {
-                isProcessingAudio = true;
-                if (audioContext.state === 'suspended') {
-                    audioContext.resume();
+            // Update debug info
+            if (debugMode) {
+                const audioValue = document.getElementById('audioValue');
+                if (audioValue) {
+                    audioValue.textContent = Math.round(normalizedVolume);
                 }
             }
-        }, { once: true });
+            
+            // Detect blow with higher threshold and sustained detection
+            if (normalizedVolume > 40 && !candleBlewOut) {
+                console.log('Blow detected! Volume:', normalizedVolume);
+                blowOutCandle();
+            }
+        }
 
+        // Candle functions
         function blowOutCandle() {
             if (candleBlewOut) return;
+            
+            console.log('Blowing out candle...');
             candleBlewOut = true;
+            updateDebug();
+            
+            // Stop audio analysis
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
             
             // Animate flame going out
             flame.classList.add('blowing');
             
             // Remove candle after animation
             setTimeout(() => {
-                gsap.to(candle, {
-                    opacity: 0,
-                    y: -20,
-                    duration: 0.5,
-                    ease: "power2.out",
-                    onComplete: () => {
-                        candle.style.display = 'none';
-                        // Show swipe indicator for cake cutting
-                        swipeIndicator.style.display = 'block';
-                        swipeIndicator.style.animation = 'fadeInOut 3s ease-in-out infinite';
-                    }
-                });
+                if (typeof gsap !== 'undefined') {
+                    gsap.to(candle, {
+                        opacity: 0,
+                        y: -20,
+                        duration: 0.5,
+                        ease: "power2.out",
+                        onComplete: showSwipeIndicator
+                    });
+                } else {
+                    // Fallback without GSAP
+                    candle.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    candle.style.opacity = '0';
+                    candle.style.transform = 'translateX(-50%) translateY(-20px)';
+                    setTimeout(showSwipeIndicator, 500);
+                }
             }, 800);
 
             // Hide mic status
             micStatus.classList.remove('show');
         }
 
-        // Optimized ribbon creation
+        function showSwipeIndicator() {
+            console.log('Showing swipe indicator...');
+            candle.style.display = 'none';
+            swipeIndicator.classList.add('show');
+        }
+
+        // Cake cutting functions
+        function cutCake() {
+            if (cakeCut) return;
+            
+            console.log('Cutting cake...');
+            cakeCut = true;
+            updateDebug();
+            
+            // Hide swipe indicator
+            swipeIndicator.classList.remove('show');
+            
+            // Add cut animation to cake
+            cakeElement.classList.add('cut');
+            
+            // Start celebration
+            startCelebration();
+        }
+
+        function startCelebration() {
+            console.log('Starting celebration...');
+            
+            // Create ribbon rain
+            const ribbonInterval = setInterval(() => {
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => createRibbon(), i * 150);
+                }
+            }, 300);
+
+            // Show celebration notification
+            setTimeout(() => {
+                showNotification('celebrationNotification');
+            }, 1000);
+
+            // Show next page button
+            setTimeout(() => {
+                nextButton.classList.add('show');
+            }, 2000);
+
+            // Stop ribbon rain after 4 seconds
+            setTimeout(() => {
+                clearInterval(ribbonInterval);
+            }, 4000);
+        }
+
         function createRibbon() {
             const ribbon = document.createElement('div');
             ribbon.className = 'ribbon';
@@ -728,146 +1021,93 @@
             }, 2500);
         }
 
-        // Touch/swipe handling for cake cutting
-        let startX = 0;
-        let startY = 0;
-        let isSwipeStarted = false;
-
-        cakeElement.addEventListener('touchstart', (e) => {
-            if (!candleBlewOut || cakeCut) return;
+        // Navigation
+        function handleNextPage() {
+            console.log('Going to next page...');
             
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-            isSwipeStarted = true;
-        }, { passive: true });
-
-        cakeElement.addEventListener('touchmove', (e) => {
-            if (!isSwipeStarted || cakeCut) return;
-            e.preventDefault();
-        }, { passive: false });
-
-        cakeElement.addEventListener('touchend', (e) => {
-            if (!isSwipeStarted || cakeCut) return;
-            
-            const endX = e.changedTouches[0].clientX;
-            const endY = e.changedTouches[0].clientY;
-            const deltaX = Math.abs(endX - startX);
-            const deltaY = Math.abs(endY - startY);
-            
-            // Check if it's a horizontal swipe (more horizontal than vertical)
-            if (deltaX > 50 && deltaX > deltaY) {
-                cutCake();
-            }
-            
-            isSwipeStarted = false;
-        }, { passive: true });
-
-        // Mouse swipe for desktop
-        let mouseDown = false;
-        let mouseStartX = 0;
-
-        cakeElement.addEventListener('mousedown', (e) => {
-            if (!candleBlewOut || cakeCut) return;
-            mouseDown = true;
-            mouseStartX = e.clientX;
-        });
-
-        cakeElement.addEventListener('mousemove', (e) => {
-            if (!mouseDown || cakeCut) return;
-            const deltaX = Math.abs(e.clientX - mouseStartX);
-            if (deltaX > 50) {
-                cutCake();
-                mouseDown = false;
-            }
-        });
-
-        cakeElement.addEventListener('mouseup', () => {
-            mouseDown = false;
-        });
-
-        function cutCake() {
-            if (cakeCut) return;
-            cakeCut = true;
-            
-            // Hide swipe indicator
-            swipeIndicator.style.display = 'none';
-            
-            // Add cut animation to cake
-            cakeElement.classList.add('cut');
-            
-            // Start celebration
-            startCelebration();
-        }
-
-        function startCelebration() {
-            // Create ribbon rain with reduced frequency for performance
-            const ribbonInterval = setInterval(() => {
-                for (let i = 0; i < 3; i++) {
-                    setTimeout(() => createRibbon(), i * 150);
-                }
-            }, 300);
-
-            // Show celebration notification
-            setTimeout(() => {
-                showNotification('celebrationNotification');
-            }, 1000);
-
-            // Show next page button
-            setTimeout(() => {
-                const nextButton = document.querySelector('.next-page-button');
-                nextButton.classList.add('show');
-            }, 2000);
-
-            // Stop ribbon rain after 4 seconds
-            setTimeout(() => {
-                clearInterval(ribbonInterval);
-            }, 4000);
-        }
-
-        // Next page navigation
-        document.querySelector('.next-page-button').addEventListener('click', () => {
             // Cleanup audio resources
             if (audioContext) {
                 audioContext.close();
             }
-            
-            // Smooth transition
-            gsap.to(document.body, {
-                opacity: 0,
-                duration: 0.5,
-                ease: "power2.out",
-                onComplete: () => {
-                    window.location.href = 'celebrate.html';
-                }
-            });
-        });
-
-        // Fallback: click to cut cake if no swipe detected after 10 seconds
-        setTimeout(() => {
-            if (candleBlewOut && !cakeCut) {
-                cake.addEventListener('click', cutCake);
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
             }
-        }, 10000);
-
-        // Performance: Prevent context menu on mobile
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-        
-        // Performance: Limit animation frame rate
-        let lastFrameTime = 0;
-        const targetFPS = 60;
-        const frameInterval = 1000 / targetFPS;
-
-        function limitedRequestAnimationFrame(callback) {
-            const now = Date.now();
-            const timeSinceLastFrame = now - lastFrameTime;
             
-            if (timeSinceLastFrame >= frameInterval) {
-                lastFrameTime = now;
-                requestAnimationFrame(callback);
+            // Smooth transition to celebrate.html
+            if (typeof gsap !== 'undefined') {
+                gsap.to(document.body, {
+                    opacity: 0,
+                    duration: 0.5,
+                    ease: "power2.out",
+                    onComplete: () => {
+                        window.location.href = 'celebrate.html';
+                    }
+                });
             } else {
-                setTimeout(() => limitedRequestAnimationFrame(callback), frameInterval - timeSinceLastFrame);
+                // Fallback without GSAP
+                document.body.style.transition = 'opacity 0.5s ease';
+                document.body.style.opacity = '0';
+                setTimeout(() => {
+                    window.location.href = 'celebrate.html';
+                }, 500);
             }
         }
+
+        // Debug functions
+        function updateDebug() {
+            if (!debugMode) return;
+            
+            const micStatusEl = document.getElementById('micStatus');
+            const candleStatusEl = document.getElementById('candleStatus');
+            const cakeStatusEl = document.getElementById('cakeStatus');
+            
+            if (micStatusEl) micStatusEl.textContent = micAccessGranted ? 'Yes' : 'No';
+            if (candleStatusEl) candleStatusEl.textContent = candleBlewOut ? 'Yes' : 'No';
+            if (cakeStatusEl) cakeStatusEl.textContent = cakeCut ? 'Yes' : 'No';
+        }
+
+        function toggleDebug() {
+            const debugPanel = document.getElementById('debugPanel');
+            if (debugPanel.classList.contains('show')) {
+                debugPanel.classList.remove('show');
+            } else {
+                debugPanel.classList.add('show');
+            }
+        }
+
+        // Test functions for development
+        function testBlowCandle() {
+            console.log('Test: Blowing out candle');
+            blowOutCandle();
+        }
+
+        function testCutCake() {
+            console.log('Test: Cutting cake');
+            if (!candleBlewOut) {
+                console.log('Candle must be blown out first');
+                blowOutCandle();
+                setTimeout(cutCake, 1000);
+            } else {
+                cutCake();
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        // Global functions for HTML onclick handlers
+        window.requestMicAccess = requestMicAccess;
+        window.skipMic = skipMic;
+        window.closeNotification = closeNotification;
+        window.testBlowCandle = testBlowCandle;
+        window.testCutCake = testCutCake;
+        window.toggleDebug = toggleDebug;
+        
+        console.log('Cake app script loaded successfully');
     </script>
 </body>
 </html>
