@@ -910,7 +910,7 @@
             }
             
             // Detect blow with higher threshold and sustained detection
-            if (normalizedVolume > 40 && !candleBlewOut) {
+            if (normalizedVolume > 60 && !candleBlewOut) {
                 console.log('Blow detected! Volume:', normalizedVolume);
                 blowOutCandle();
             }
