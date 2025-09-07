@@ -164,13 +164,15 @@
             }
         }
         
-        /* Message Box */
-        .message-box {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
+        /* Main Container for Messages */
+        .message-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
             text-align: center;
             opacity: 0;
             transform: translateY(50px);
@@ -182,6 +184,16 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        /* Message Box */
+        .message-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px; /* Added spacing */
         }
 
         .message-box h1 {
@@ -200,14 +212,9 @@
 
         /* Bottom Message */
         .bottom-message {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
             background: rgba(255, 255, 255, 0.9);
             padding: 20px 30px;
             border-radius: 15px;
-            text-align: center;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             max-width: 90%;
             opacity: 0;
@@ -217,11 +224,11 @@
         @keyframes bottomMessageAppear {
             from {
                 opacity: 0;
-                transform: translateX(-50%) translateY(100px);
+                transform: translateY(100px);
             }
             to {
                 opacity: 1;
-                transform: translateX(-50%) translateY(0);
+                transform: translateY(0);
             }
         }
 
@@ -236,7 +243,6 @@
     </style>
 </head>
 <body class="min-h-screen bg-gray-900 overflow-hidden" id="body">
-    <!-- Volume Popup -->
     <div id="volume-popup" class="popup-overlay hidden">
         <div class="popup">
             <h2>🎵 Get Ready for Music!</h2>
@@ -245,12 +251,10 @@
         </div>
     </div>
 
-    <!-- Audio Element -->
     <audio id="background-music" loop>
         <source src="bg1.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- Initial Screen -->
     <div class="min-h-screen flex items-center justify-center px-4" id="initial-screen">
         <div class="text-center">
             <h1 class="text-6xl font-dancing text-white mb-12 opacity-80">
@@ -265,7 +269,6 @@
         </div>
     </div>
 
-    <!-- Animation Container -->
     <div id="animation-container" class="animation-container">
         <div class="round-image"></div>
         <div class="star">⭐</div>
@@ -282,8 +285,7 @@
         <div class="heart">💕</div>
     </div>
 
-    <!-- Main Message -->
-    <div id="main-message" class="fixed inset-0 flex items-center justify-center p-6 hidden">
+    <div id="main-messages-container" class="message-container hidden">
         <div class="message-box">
             <h1 class="font-dancing">Happy Birthday Madam Ji</h1>
             <h2 class="font-playfair">but things that I don't like about you</h2>
@@ -291,13 +293,12 @@
                 (This section is intentionally left empty)
             </div>
         </div>
-    </div>
 
-    <!-- Bottom Message -->
-    <div id="bottom-message" class="bottom-message hidden">
-        <p class="font-playfair text-lg mb-2">Wishing you the most wonderful birthday! 🎂✨</p>
-        <p class="font-dancing text-base">With love and warm wishes,</p>
-        <p class="font-dancing text-lg font-bold text-pink-600 mt-1">Someone who littel-littel cares about you 💕</p>
+        <div class="bottom-message">
+            <p class="font-playfair text-lg mb-2">Wishing you the most wonderful birthday! 🎂✨</p>
+            <p class="font-dancing text-base">With love and warm wishes,</p>
+            <p class="font-dancing text-lg font-bold text-pink-600 mt-1">Someone who littel-littel cares about you 💕</p>
+        </div>
     </div>
 
     <script>
@@ -308,8 +309,7 @@
         const startMusicBtn = document.getElementById('start-music-btn');
         const backgroundMusic = document.getElementById('background-music');
         const animationContainer = document.getElementById('animation-container');
-        const mainMessage = document.getElementById('main-message');
-        const bottomMessage = document.getElementById('bottom-message');
+        const mainMessagesContainer = document.getElementById('main-messages-container');
 
         let animationRunning = false;
 
@@ -354,11 +354,7 @@
         }
 
         function showMainMessage() {
-            mainMessage.classList.remove('hidden');
-            
-            setTimeout(() => {
-                bottomMessage.classList.remove('hidden');
-            }, 2000);
+            mainMessagesContainer.classList.remove('hidden');
         }
 
         lightBtn.addEventListener('mouseover', () => {
