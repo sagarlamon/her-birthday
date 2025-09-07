@@ -168,7 +168,7 @@
         .message-container {
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* Changed to flex-start */
             align-items: center;
             min-height: 100vh;
             padding: 20px;
@@ -177,6 +177,7 @@
             opacity: 0;
             transform: translateY(50px);
             animation: messageAppear 1s ease-out forwards;
+            padding-bottom: 50px; /* Added bottom padding */
         }
 
         @keyframes messageAppear {
@@ -193,7 +194,9 @@
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(10px);
-            margin-bottom: 20px; /* Added spacing */
+            margin-bottom: 20px;
+            max-width: 90%;
+            width: 100%;
         }
 
         .message-box h1 {
@@ -242,8 +245,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-gray-900 overflow-hidden" id="body">
-    <div id="volume-popup" class="popup-overlay hidden">
+<body class="min-h-screen bg-gray-900" id="body"> <div id="volume-popup" class="popup-overlay hidden">
         <div class="popup">
             <h2>🎵 Get Ready for Music!</h2>
             <p>Please increase your phone volume for the best experience with background music.</p>
@@ -330,7 +332,7 @@
 
         function startCelebration() {
             lightBtn.classList.add('fade-out');
-            body.className = 'min-h-screen sky-gradient overflow-hidden';
+            body.className = 'min-h-screen sky-gradient'; // Removed overflow-hidden
             
             setTimeout(() => {
                 initialScreen.style.display = 'none';
